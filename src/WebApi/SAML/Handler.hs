@@ -39,7 +39,7 @@ import           WebApi.SAML.Contract
 import           WebApi.SAML.Settings           ( AppSettings(..) )
 import           WebApi.SAML.SSOTypes
 import           WebApi.SAML.Utils
-import           WebApi
+import           WebApi                  hiding ( err )
 import           Data.Typeable
 
 data SSOServiceProviderImpl c = SSOServiceProviderImpl (AppSettings c)
@@ -67,32 +67,41 @@ instance ApiHandler (SSOServiceProviderImpl c) POST (SamlR c) where
         smresp <- liftIO $ verifySAMLAssertion ass
         case smresp of
           Just True -> do
-            c <- liftIO . samlHandler appSetting $ ass
-            respondWith status303
-                        (html "")
-                        (Just . RedirectHeader . redirectPath $ appSetting)
-                        (Just c)
+            ec <- liftIO . samlHandler appSetting $ ass
+            case ec of
+              Left  err -> respondWith badRequest400 (html err) Nothing Nothing
+              Right c   -> respondWith
+                status303
+                (html "")
+                (Just . RedirectHeader . redirectPath $ appSetting)
+                (Just c)
           _ -> respondWith badRequest400 (html "Access Denied") Nothing Nothing
       _ -> respondWith badRequest400 (html "Access Denied") Nothing Nothing
 
 instance ApiHandler (SSOServiceProviderImpl c) GET (LogoutR c) where
-  handler _ _ = do
+  handler _ req = do
     appSetting <- ask
-    let x1 = encodeUtf8 $ privateKey appSetting -- Unsafe
-    let (PrivKeyRSA pk) = head $ readKeyFileFromMemory x1
+    let mck             = cookieIn req
+        x1              = encodeUtf8 $ privateKey appSetting -- Unsafe
+        (PrivKeyRSA pk) = head $ readKeyFileFromMemory x1
         sk              = SigningKeyRSA . CR.KeyPair $ pk
-    (bid, sids, c) <- liftIO $ logoutHandler appSetting
-    samlReqToken   <-
-      liftIO $ (return . encodeValue) =<< signSAMLProtocol sk =<< fmap
-        RequestLogoutRequest
-        (mkLogoutRequest (T.unpack bid) (fmap T.unpack sids) (idpUri appSetting)
-        )
+    eRes <- liftIO $ (logoutHandler appSetting) mck
+    case eRes of
+      Left err -> respondWith badRequest400 (html err) Nothing Nothing
+      Right (bid, sids, c) -> do
+        samlReqToken <-
+          liftIO $ (return . encodeValue) =<< signSAMLProtocol sk =<< fmap
+            RequestLogoutRequest
+            (mkLogoutRequest (T.unpack bid)
+                             (fmap T.unpack sids)
+                             (idpUri appSetting)
+            )
 
-    respondWith
-      status200
-      (html (htmlBdy (C.fromStrict samlReqToken) (idpUri appSetting)))
-      Nothing
-      (Just c)
+        respondWith
+          status200
+          (html (htmlBdy (C.fromStrict samlReqToken) (idpUri appSetting)))
+          Nothing
+          (Just c)
    where
       -- replace HTTP POST with HTTP Redirect
     htmlBdy x idp =
@@ -115,7 +124,8 @@ instance ApiHandler (SSOServiceProviderImpl c) GET (HomeR c) where
                           (Just . RedirectHeader . redirectPath $ appSetting)
                           ()
       _ -> do
-        samlReqToken <- liftIO $ (return . encodeValue) =<< mkAuthnRequest (spURI appSetting)
+        samlReqToken <- liftIO $ (return . encodeValue) =<< mkAuthnRequest
+          (spURI appSetting)
         respondWith
           status200
           (html (htmlBdy (C.fromStrict samlReqToken) (idpUri appSetting)))

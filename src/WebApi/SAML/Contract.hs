@@ -13,7 +13,7 @@ data SSOServiceProvider cookie
 
 data Saml cookie
 
-type HomeR c = (Saml c) :// "home"
+type HomeR c = (Saml c) :// ""
 type SamlR c = (Saml c) :// "saml"
 type LogoutR c = (Saml c) :// "logout"
 
