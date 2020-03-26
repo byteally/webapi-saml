@@ -7,7 +7,10 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE RankNTypes            #-}
-module WebApi.SAML.Settings where
+module WebApi.SAML.Settings
+  ( module WebApi.SAML.Settings
+  , Assertion
+  ) where
 
 import           Data.Text
 import           Network.URI
