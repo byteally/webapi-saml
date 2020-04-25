@@ -14,7 +14,7 @@ import qualified Data.ByteString.Lazy          as BL
 import           Data.List                     as DL
 import qualified Data.Map                      as M
 import           Data.Text                     as T
-import           Data.Time.Clock
+import           Data.Time
 import           Data.UUID
 import           Data.UUID.V4
 import           Network.URI
@@ -37,7 +37,7 @@ mkAuthnRequest spUri = do
       rat    = RequestAbstractType
         (ProtocolType protId
                       SAML20
-                      now
+                      (formatTime defaultTimeLocale "%Y-%m-%dT%H:%M:%SZ" now)
                       Nothing
                       (Identified ConsentExplicit)
                       (Just (Issuer (simpleNameID NameIDFormatEntity spUrl)))
@@ -70,7 +70,7 @@ mkLogoutRequest bid sessIDs idpLogoutUri = do
       rat    = RequestAbstractType
         (ProtocolType protId
                       SAML20
-                      now
+                      (formatTime defaultTimeLocale "%Y-%m-%dT%H:%M:%SZ" now)
                       (Just idpLogoutUri)
                       (Identified ConsentExplicit)
                       (Just (Issuer (simpleNameID NameIDFormatEntity spUrl)))

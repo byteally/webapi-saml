@@ -15,5 +15,5 @@ source-repository-package
 
 source-repository-package
     type: git
-    location: https://github.com/dylex/hsaml2
-    tag: 04be5e7b9d740a8d4086638ea4d4e59d0429b856
+    location: https://github.com/zzat/hsaml2
+    tag: a9ac577f7d9af6c27bee7f259437696897dfda84
