@@ -13,13 +13,16 @@ data SSOServiceProvider cookie
 
 data Saml cookie
 
-type HomeR c = (Saml c) :// ""
+type HomeR c = (Saml c) :// "home"
 type SamlR c = (Saml c) :// "saml"
 type LogoutR c = (Saml c) :// "logout"
 
 instance WebApi (SSOServiceProvider c) where
   type Apis (SSOServiceProvider c)
-    = '[Route '[POST] (SamlR c), Route '[GET] (LogoutR c)]
+    = '[ Route '[POST] (SamlR c)
+       , Route '[GET] (HomeR c)
+       , Route '[GET] (LogoutR c)
+       ]
 
 instance ApiContract (SSOServiceProvider c) GET (HomeR c) where
   type ApiOut GET (HomeR c) = Html
