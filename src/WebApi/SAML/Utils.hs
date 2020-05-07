@@ -61,12 +61,12 @@ mkAuthnRequest spUri = do
         Nothing
   return ar
 
-mkLogoutRequest :: String -> [String] -> URI -> IO LogoutRequest
-mkLogoutRequest bid sessIDs idpLogoutUri = do
+mkLogoutRequest :: String -> [String] -> URI -> URI -> IO LogoutRequest
+mkLogoutRequest bid sessIDs idpLogoutUri spUri = do
   now  <- getCurrentTime
   uuid <- nextRandom
   let protId = "pid-" ++ toString uuid
-      spUrl = uriScheme idpLogoutUri <> maybe "" (\x -> "//" <> uriRegName x) (uriAuthority idpLogoutUri)
+      spUrl = uriScheme spUri <> maybe "" (\x -> "//" <> uriRegName x) (uriAuthority spUri)
       rat    = RequestAbstractType
         (ProtocolType protId
                       SAML20

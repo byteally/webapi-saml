@@ -95,6 +95,7 @@ instance ApiHandler (SSOServiceProviderImpl c) GET (LogoutR c) where
             (mkLogoutRequest (T.unpack bid)
                              (fmap T.unpack sids)
                              (idpUri appSetting)
+                             (spURI appSetting)
             )
 
         respondWith
